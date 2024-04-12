@@ -1,11 +1,18 @@
 use ::std::path::PathBuf;
 
-struct Config;
+// The purpose of the libary is to easily:
+// * read a json configuration file from a specified location
+
+struct Config {
+    path: PathBuf,
+}
 
 impl Config {
     pub fn new(path: PathBuf) -> Config {
-        Config
+        Config { path }
     }
+
+    pub fn exists(&self) {}
 }
 
 #[cfg(test)]
