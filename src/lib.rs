@@ -1,31 +1,27 @@
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::error::Error;
 use std::fs;
-use std::io::Read;
+use std::io::BufReader;
 use std::path::Path;
 
-fn read_file_to_string(path: &Path) -> String {
-    let mut f = fs::File::open(path).expect("Unable to open file");
-    let mut contents = String::new();
-    f.read_to_string(&mut contents).unwrap();
-    contents
-}
-
-pub fn read_config<T>(path: &Path) -> T
+pub fn read_config<T>(path: &Path) -> Result<T, Box<dyn Error>>
 where
     T: DeserializeOwned,
 {
-    let file_string = read_file_to_string(path);
-    let deserialized: T = serde_json::from_str(&file_string).unwrap();
-    deserialized
+    let f = fs::File::open(path)?;
+    let reader = BufReader::new(f);
+    let deserialized: T = serde_json::from_reader(reader)?;
+    Ok(deserialized)
 }
 
-pub fn write_config<T>(path: &Path, structure: &T)
+pub fn write_config<T>(path: &Path, structure: &T) -> Result<(), Box<dyn Error>>
 where
     T: Serialize,
 {
-    let serialized = serde_json::to_string(structure).unwrap();
-    fs::write(path, serialized).expect("Unable to write file");
+    let serialized = serde_json::to_string(structure)?;
+    fs::write(path, serialized)?;
+    Ok(())
 }
 
 #[cfg(test)]
@@ -48,9 +44,9 @@ mod tests {
             a: String::from("abc"),
         };
 
-        write_config(path, &config);
+        write_config(path, &config).unwrap();
 
-        let config_new: Config = read_config(path);
+        let config_new: Config = read_config(path).unwrap();
 
         assert_eq!(config, config_new);
 
